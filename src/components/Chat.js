@@ -7,6 +7,8 @@ import Message from "./Message";
 
 
 const Chat = () => {
+        let isComponentUnmounted = false;
+
         const idInstance = useSelector((state) => state.chatReducer.id)
         const apiTokenInstance = useSelector((state) => state.chatReducer.token)
         const number = useSelector((state) => state.chatReducer.number)
@@ -42,14 +44,11 @@ const Chat = () => {
         }
 
         const subscribe = async () => {
-            if (idInstance && apiTokenInstance) {
+            if (idInstance && apiTokenInstance && !isComponentUnmounted) {
                 try {
                     const {data} = await axios.get(`https://api.green-api.com/waInstance${idInstance}/receiveNotification/${apiTokenInstance}`)
-                    console.log('try')
                     if (data !== null) {
-                        console.log('few1')
                         await axios.delete(`https://api.green-api.com/waInstance${idInstance}/deleteNotification/${apiTokenInstance}/${data.receiptId}`)
-                        console.log(data)
                         setMessages(prev => [...prev, data])
                     }
                     await subscribe()
@@ -63,7 +62,11 @@ const Chat = () => {
 
         useEffect(() => {
             subscribe()
-        },[]);
+
+            return () => {
+                isComponentUnmounted = true; // Установка флага размонтирования компонента
+            }
+        }, []);
 
 
         return (
